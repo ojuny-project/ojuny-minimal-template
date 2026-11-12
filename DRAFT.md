@@ -1,7 +1,7 @@
 # DRAFT - ojuny-minimal-template
 
-Status: draft scope. Nothing is built. This file describes what the repository
-is supposed to contain, not what it contains today.
+Status: implemented 2026-11-12. The files are flat under `modules/`; the
+module-name contract makes the numbered directory shape unnecessary.
 
 ## Purpose
 
@@ -39,11 +39,11 @@ ojuny-minimal-template/
   flake.nix                  dendritic entrypoint
   flake.lock
   modules/
-    01-users/                account module
-    07-system/               host, hardware, networking, configuration
-  scripts/                   setup and generator scripts
-  docs/                      template requirements and setup notes
-  tests/                     evaluation, setup and VM install checks
+    minimal-system.nix       host-imports, configuration and networking
+    00-host.nix              default host and generated host
+    00-hardware.nix          generated hardware and bootloader
+    00-user.nix              generated user module
+  scripts/                   setup, generators and the template check
 ```
 
 The tree should stay as small as possible. If a file is not needed for the
@@ -60,9 +60,9 @@ consumer. They are not part of the minimum.
 
 ### Modules
 
-- A generated hardware module at `modules/07-system/00-hardware.nix`.
-- A generated host registration module at `modules/07-system/00-host.nix`.
-- A generated user module at `modules/01-users/01-user.nix`.
+- A generated hardware module at `modules/00-hardware.nix`.
+- A generated host registration module at `modules/00-host.nix`.
+- A generated user module at `modules/00-user.nix`.
 - Base system configuration for networking, boot, users and state version.
 - No desktop, compositor, application pages, settings GUI, patch switch or
   gaming pages by default. These are additions a user makes after forking.
@@ -72,23 +72,19 @@ consumer. They are not part of the minimum.
 - `setup.sh`: clone a fork, generate hardware, user and host, offer a rebuild.
 - `generate-hw.sh`: write the hardware module and `facter.json`.
 - `generate-user.sh`: write the user module with a hashed password.
-- `create-new-system.sh`: register the host in `flake.nix`.
+- `create-new-system.sh`: set the hostname and register the host.
 
 ### Documentation
 
-- What makes a template installable and bootable.
-- The generated file paths and the prompts that produce them.
-- How the setup script is invoked and what it writes.
-- How to add a desktop, settings GUI or patches after forking.
-- A module tree generated from the repository.
+`README.md` covers the generated paths, the setup invocation and how to add
+features. `docs/` and a generated module tree are not part of the minimum.
 
-### Tests
+### Validation
 
-- Clean-clone evaluation of the host.
-- A NixOS VM boot test.
-- A setup-script run that produces a valid host, user and hardware module.
-- An install driven by the standard installer.
-- A boot of the installed system.
+`nix run .#check` checks the required module names, the required scripts and
+the host. `nix run .#check -- --system` also evaluates the system. `nix flake
+check` runs the static check. A VM boot test and an installer-driven install
+are left to the consuming product.
 
 ## Minimum template requirements
 
@@ -111,6 +107,8 @@ depend on them.
 ## Limits and non-goals
 
 - No desktop environment and no graphical session in the starter.
+- No Home Manager input. The generators and installer omit the Home Manager
+  user block when the target flake does not declare it.
 - No application catalog beyond the base system.
 - No installer implementation. That is `ojuny-minimal-installer`.
 - No fleet, server, NAS or gaming features.
